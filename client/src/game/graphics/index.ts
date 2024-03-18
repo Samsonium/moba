@@ -55,13 +55,14 @@ export default class Graphics {
         window.addEventListener('resize', this.handleResize.bind(this));
 
         this.camera = new PerspectiveCamera(45, innerWidth / innerHeight);
-        this.camera.position.set(4, 4, 4);
-        this.camera.lookAt(0, 0, 0);
 
         this.scene = new Scene();
+        this.raycaster = new Raycaster();
 
         this.players = [];
-        this.player = this.createLocalPlayer(0, .5, 0);
+        this.player = this.createLocalPlayer(0, 0, 0);
+        this.camera.position.set(10, 15, 10);
+        this.camera.lookAt(0, 0, 0);
 
         this.renderStarted = false;
     }
@@ -131,6 +132,52 @@ export default class Graphics {
         if (this.renderStarted) return;
         this.renderStarted = true;
         this.renderStep();
+    }
+
+    /** Move character to specified position */
+    public moveTo(position: Vector2) {
+        clearInterval(this.movementInterval);
+        this.raycaster.setFromCamera(position, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.scene.children,
+            true);
+
+        if (!intersects.length) return
+        const current = this.player.object.position;
+        const target = intersects[0].point;
+        target.y += .2;
+
+        const path = this.pathfinder!.computePath(current, target);
+        const dir = target.clone().sub(current).normalize();
+        const dist = current.distanceTo(target);
+
+        const start = Date.now();
+        const duration = dist * 1000;
+        console.log(duration);
+
+        this.movementInterval = setInterval(() => {
+            const now = Date.now();
+            const elapsed = now - start;
+            const fraction = elapsed / duration;
+            const coords = new Vector3(
+                current.x + (target.x - current.x) * fraction,
+                current.y + (target.y - current.y) * fraction,
+                current.z + (target.z - current.z) * fraction,
+            );
+
+            if (fraction < 1) {
+                this.player.object.position.set(coords.x, coords.y, coords.z);
+            } else {
+                this.player.object.position.set(target.x, target.y, target.z);
+                clearInterval(this.movementInterval);
+                return;
+            }
+
+            this.camera.position.set(
+                coords.x + 10,
+                coords.y + 15,
+                coords.z + 10
+            )
+        }, 10);
     }
 
     /**
