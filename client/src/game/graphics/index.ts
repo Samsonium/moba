@@ -15,6 +15,7 @@ import {
     Vector3,
     WebGLRenderer
 } from 'three';
+import { Tween } from '@tweenjs/tween.js';
 // @ts-ignore
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import type PlayerNetData from '../network/player/PlayerNetData';
@@ -146,38 +147,18 @@ export default class Graphics {
         const target = intersects[0].point;
         target.y += .2;
 
-        const path = this.pathfinder!.computePath(current, target);
-        const dir = target.clone().sub(current).normalize();
         const dist = current.distanceTo(target);
-
-        const start = Date.now();
-        const duration = dist * 1000;
+        const duration = dist * 300;
         console.log(duration);
 
+        const tween = new Tween<Vector3>(this.player.object.position)
+            .to(target, duration).start();
         this.movementInterval = setInterval(() => {
-            const now = Date.now();
-            const elapsed = now - start;
-            const fraction = elapsed / duration;
-            const coords = new Vector3(
-                current.x + (target.x - current.x) * fraction,
-                current.y + (target.y - current.y) * fraction,
-                current.z + (target.z - current.z) * fraction,
-            );
-
-            if (fraction < 1) {
-                this.player.object.position.set(coords.x, coords.y, coords.z);
-            } else {
-                this.player.object.position.set(target.x, target.y, target.z);
-                clearInterval(this.movementInterval);
-                return;
-            }
-
-            this.camera.position.set(
-                coords.x + 10,
-                coords.y + 15,
-                coords.z + 10
-            )
+            tween.update();
+            const {x,y,z} = this.player.object.position;
+            this.camera.position.set(x + 10, y + 15, z + 10);
         }, 10);
+        console.log(this.movementInterval);
     }
 
     /**
