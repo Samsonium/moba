@@ -1,4 +1,3 @@
-import type { Vector3 } from '../../socket/Vector3';
 import type MessageNetData from './message/MessageNetData';
 import type PlayerNetData from './player/PlayerNetData';
 
