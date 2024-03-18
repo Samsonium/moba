@@ -1,0 +1,16 @@
+/*
+
+# Dirs
+!/public
+!/src
+
+# Files
+!/.gitignore
+!/index.html
+!/package.json
+!/README.md
+!/svelte.config.js
+!/tsconfig.json
+!/tsconfig.node.json
+!/vite.config.ts
+!/yarn.lock
