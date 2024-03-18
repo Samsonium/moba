@@ -7,7 +7,7 @@ import {
     DirectionalLight,
     Group,
     Mesh,
-    MeshLambertMaterial,
+    MeshLambertMaterial, Object3D,
     PerspectiveCamera,
     Raycaster,
     Scene,
@@ -17,7 +17,7 @@ import {
 } from 'three';
 import { Tween } from '@tweenjs/tween.js';
 // @ts-ignore
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { type GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import type PlayerNetData from '../network/player/PlayerNetData';
 
 export default class Graphics {
@@ -79,10 +79,9 @@ export default class Graphics {
             ]);
 
         const loader = new GLTFLoader();
-        loader.load('/objects/map.glb', (gltf: any) => {
+        loader.load('/objects/map.glb', (gltf: GLTF) => {
             const root = gltf.scene;
-            root.castShadow = true;
-            root.receiveShadow = true;
+            console.log(root.children);
             for (const ch of root.children) {
                 ch.castShadow = true;
                 ch.receiveShadow = true;
@@ -90,27 +89,33 @@ export default class Graphics {
 
             const meshes: Mesh[] = [];
             root.traverse((child: any) => {
-                console.log(child);
-                if (child instanceof Mesh)
+                if (child instanceof Mesh && !['Cube', 'Cube.001', 'Cube.002', 'Cube.003'].includes(child.userData.name))
                     meshes.push(child);
             })
 
             const { navMesh, success } = threeToSoloNavMesh(
-                meshes
+                meshes,
+                {
+                    cs: 0.2,
+                    ch: 0.2,
+                    walkableSlopeAngle: 30,
+                    walkableHeight: 1,
+                    walkableClimb: 4,
+                    walkableRadius: 1,
+                    maxEdgeLen: 6,
+                    maxSimplificationError: 1.3,
+                    minRegionArea: 4,
+                    mergeRegionArea: 20,
+                    maxVertsPerPoly: 6,
+                    detailSampleDist: 8,
+                    detailSampleMaxError: 1,
+                }
             );
             this.navmesh = navMesh;
             this.pathfinder = new NavMeshQuery({ navMesh: this.navmesh! });
 
-            this.scene.add(root.children[0]);
             this.scene.add(root);
         })
-
-        // loader.load('/objects/map_move.glb', (gltf: GLTF) => {
-        //     const root = gltf.scene;
-        //     // root.children[0].visible = false;
-        //
-        //
-        // })
 
         const ambLight = new AmbientLight(0xFFFFFF, 2);
 
@@ -118,6 +123,7 @@ export default class Graphics {
         dirLight.position.set(-1, 3, 1);
         dirLight.lookAt(0, 0, 0);
         dirLight.castShadow = true;
+        dirLight.shadow.autoUpdate = false;
 
         this.scene.add(ambLight);
         this.scene.add(dirLight);
@@ -147,18 +153,49 @@ export default class Graphics {
         const target = intersects[0].point;
         target.y += .2;
 
-        const dist = current.distanceTo(target);
-        const duration = dist * 300;
-        console.log(duration);
+        const path = this.pathfinder!.computePath(current, target);
+        console.log(path);
 
-        const tween = new Tween<Vector3>(this.player.object.position)
-            .to(target, duration).start();
+        let playerPosClone = this.player.object.position.clone();
+        let parentTween: Tween<Vector3> | null = null;
+        for (let i = 0; i < path.length; i++) {
+            const pos = path[i];
+            const prev = i > 0
+                ? new Vector3(path[i - 1].x, path[i - 1].y, path[i - 1].z)
+                : current;
+
+            const dist = prev.distanceTo(pos);
+            const duration = dist * 100;
+
+            if (!parentTween) {
+                parentTween = new Tween(playerPosClone)
+                    .to(pos, duration);
+            } else {
+                parentTween.to(pos, duration);
+            }
+        }
+        parentTween?.start();
+
+        if (!parentTween) return;
         this.movementInterval = setInterval(() => {
-            tween.update();
+            if (!parentTween!.update())
+                clearInterval(this.movementInterval);
+
+            this.player.object.position.copy(playerPosClone);
+            // const posFrom = playerPosClone.clone().add(new Vector3(0, -5, 0));
+            // this.raycaster.set(posFrom, new Vector3(0, 1, 0));
+            // const floor = this.raycaster.intersectObject(this.navmeshObject!,
+            //     true);
+            //
+            // if (floor.length) {
+            //     const point = floor[0].point;
+            //     console.log(`[${playerPosClone.toArray()}] -> [${point.toArray()}]`)
+            //     this.player.object.position.copy(point);
+            // }
+
             const {x,y,z} = this.player.object.position;
             this.camera.position.set(x + 10, y + 15, z + 10);
         }, 10);
-        console.log(this.movementInterval);
     }
 
     /**
