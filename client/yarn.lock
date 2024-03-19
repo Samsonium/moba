@@ -178,34 +178,6 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@recast-navigation/core@0.17.0":
-  version "0.17.0"
-  resolved "https://registry.yarnpkg.com/@recast-navigation/core/-/core-0.17.0.tgz#6845243677068c6367b82c39aba7ed695ebadb6a"
-  integrity sha512-fbn50ajSZAYUAH/7Bljl3iMTIoWVLcnKCgfH0frCVWYwnUAacZDRWkthU1y52EiUjuYfm66VuDO8G0i7odI2eA==
-  dependencies:
-    "@recast-navigation/wasm" "0.17.0"
-
-"@recast-navigation/generators@0.17.0":
-  version "0.17.0"
-  resolved "https://registry.yarnpkg.com/@recast-navigation/generators/-/generators-0.17.0.tgz#43ebbf5cc99bb63af14b9c880068ecc4f645005c"
-  integrity sha512-HVeuUSwIRLhbWVkpiMy7cZW7xymUI7t0fUngaWLRkfFif77QyY7ErpalaoZeihiZbgkrdimnywJhL6C3MNTZnA==
-  dependencies:
-    "@recast-navigation/core" "0.17.0"
-    "@recast-navigation/wasm" "0.17.0"
-
-"@recast-navigation/three@0.17.0", "@recast-navigation/three@^0.17.0":
-  version "0.17.0"
-  resolved "https://registry.yarnpkg.com/@recast-navigation/three/-/three-0.17.0.tgz#09ec91b0489a9502e9d6459c2cd005106bd10fae"
-  integrity sha512-Uz2xdZQm0iBF+zC98c8FLxTpNP0C6ctZNlHsRJRMa0RIoxaRvR05XKGO6YRSU2fHzj9qFC3KmDIWCFh8zPKufQ==
-  dependencies:
-    "@recast-navigation/core" "0.17.0"
-    "@recast-navigation/generators" "0.17.0"
-
-"@recast-navigation/wasm@0.17.0":
-  version "0.17.0"
-  resolved "https://registry.yarnpkg.com/@recast-navigation/wasm/-/wasm-0.17.0.tgz#4194dc2a985f16fd7d520529690609b1fb0c357e"
-  integrity sha512-NLI7WkjHuS42ldDYJaOntix/sgzjqMIPjFYJppudvbQtQAN1msnbmi+SK97rp7NeDW06v460yNydgA6kVPAvvw==
-
 "@rollup/rollup-android-arm-eabi@4.13.0":
   version "4.13.0"
   resolved "https://registry.yarnpkg.com/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.13.0.tgz#b98786c1304b4ff8db3a873180b778649b5dff2b"
@@ -633,11 +605,6 @@ is-reference@^3.0.0, is-reference@^3.0.1:
   dependencies:
     "@types/estree" "*"
 
-keyboard-manager@^4.0.1:
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/keyboard-manager/-/keyboard-manager-4.0.1.tgz#597c2efff146162ca4a3d3c50b04ba4d5733f5a7"
-  integrity sha512-b9B3y4m3JU+GNbkMR/9BJ8VfUUa4zz6uoxI6NB/BU8TcDqqjWq1+j0oSfsWDsGbxFaldEvWMzVcMXGBaERdL3A==
-
 kleur@^4.1.5:
   version "4.1.5"
   resolved "https://registry.yarnpkg.com/kleur/-/kleur-4.1.5.tgz#95106101795f7050c6c650f350c683febddb1780"
@@ -780,15 +747,6 @@ readdirp@~3.6.0:
   integrity sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==
   dependencies:
     picomatch "^2.2.1"
-
-recast-navigation@^0.17.0:
-  version "0.17.0"
-  resolved "https://registry.yarnpkg.com/recast-navigation/-/recast-navigation-0.17.0.tgz#9ef9780cd31061a7d1af4bd3888fd102be1fdfb3"
-  integrity sha512-9QxNRbeocxJ6845JxhGL8jJlcK/nOewJ06LYF94a9H+5X3MNvwHNfX0kXHtgYrEuI8dBDp0AfwGGbrcqHODwDw==
-  dependencies:
-    "@recast-navigation/core" "0.17.0"
-    "@recast-navigation/generators" "0.17.0"
-    "@recast-navigation/three" "0.17.0"
 
 resolve-from@^4.0.0:
   version "4.0.0"
