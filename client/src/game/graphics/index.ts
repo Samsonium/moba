@@ -24,6 +24,7 @@ import type PlayerNetData from '../network/player/PlayerNetData';
 export default class Graphics {
     private readonly PF_ZONE = 'LOBBY';
     private readonly CAM_OFFSET = new Vector3(10, 20, 10);
+    private readonly SUN_OFFSET = new Vector3(-10, 30, 10);
 
     private readonly renderer: WebGLRenderer;
     private readonly camera: PerspectiveCamera;
@@ -36,6 +37,7 @@ export default class Graphics {
     private navmesh: Mesh | undefined;
     private groupID: any;
     private navpath: any;
+    private sun: DirectionalLight | undefined;
 
     /** Players added to the scene */
     private readonly players: {
@@ -94,6 +96,8 @@ export default class Graphics {
         const loader = new GLTFLoader();
         loader.load('/objects/lobby_map.glb', (gltf: GLTF) => {
             const root = gltf.scene;
+            root.castShadow = true;
+            root.receiveShadow = true;
 
             root.traverse((child: Mesh) => {
                 if (child.isMesh) {
@@ -113,13 +117,24 @@ export default class Graphics {
             });
         });
 
-        const ambLight = new AmbientLight(0xFFFFFF, 2);
+        const ambLight = new AmbientLight(0xFFFFFF, 1);
+        ambLight.updateMatrixWorld();
 
-        const dirLight = new DirectionalLight(0xFFFFFF, 5);
-        dirLight.position.set(-1, 3, 1);
-        dirLight.lookAt(0, 0, 0);
-        dirLight.castShadow = true;
-        dirLight.shadow.autoUpdate = false;
+        this.sun = new DirectionalLight(0xFFFFFF, 5);
+        this.sun.castShadow = true;
+        this.sun.shadow.mapSize.set(512, 512);
+        this.sun.shadow.bias = 0.0001;
+        this.sun.shadow.blurSamples = 8;
+        this.sun.shadow.radius = 2;
+        this.sun.shadow.camera.top = 50;
+        this.sun.shadow.camera.left = -50;
+        this.sun.shadow.camera.right = 50;
+        this.sun.shadow.camera.bottom = -50;
+        this.sun.position.copy(this.player.object.position).add(this.SUN_OFFSET);
+        this.sun.target.position.copy(this.player.object.position).sub(this.SUN_OFFSET);
+        this.sun.target.updateMatrixWorld();
+
+        this.scene.add(new CameraHelper(this.sun.shadow.camera));
 
         const lightGroup = new Group();
         lightGroup.add(ambLight, dirLight);
