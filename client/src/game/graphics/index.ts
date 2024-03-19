@@ -126,9 +126,8 @@ export default class Graphics {
 
         this.sun = new DirectionalLight(0xFFFFFF, 5);
         this.sun.castShadow = true;
-        this.sun.shadow.mapSize.set(512, 512);
-        this.sun.shadow.bias = 0.0001;
-        this.sun.shadow.blurSamples = 8;
+        this.sun.shadow.mapSize.set(1024, 1024);
+        this.sun.shadow.blurSamples = 12;
         this.sun.shadow.radius = 2;
         this.sun.shadow.camera.top = 50;
         this.sun.shadow.camera.left = -50;
