@@ -205,6 +205,10 @@ export default class Graphics {
             distance.normalize();
             this.player.object.position.add(distance.multiplyScalar(delta * 4));
             this.camera.position.copy(this.player.object.position).add(this.CAM_OFFSET);
+
+            this.sun!.position.copy(this.player.object.position).add(this.SUN_OFFSET);
+            this.sun!.target.position.copy(this.player.object.position).sub(this.SUN_OFFSET);
+            this.sun!.target.updateMatrixWorld();
         } else {
             this.navpath.shift();
         }
