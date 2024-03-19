@@ -121,8 +121,10 @@ export default class Graphics {
         dirLight.castShadow = true;
         dirLight.shadow.autoUpdate = false;
 
-        this.scene.add(ambLight);
-        this.scene.add(dirLight);
+        const lightGroup = new Group();
+        lightGroup.add(ambLight, dirLight);
+
+        this.scene.add(lightGroup as any);
     }
 
     /** Cleanup events */
