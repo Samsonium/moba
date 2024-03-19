@@ -61,6 +61,7 @@ export default class Graphics {
         this.renderer.setSize(innerWidth, innerHeight);
         this.renderer.shadowMap.enabled = true;
         window.addEventListener('resize', this.handleResize.bind(this));
+        window.addEventListener('contextmenu', this.onRightClick.bind(this));
 
         this.camera = new PerspectiveCamera(45, innerWidth / innerHeight);
 
@@ -91,7 +92,7 @@ export default class Graphics {
             ]);
 
         const loader = new GLTFLoader();
-        loader.load('/objects/map.glb', (gltf: GLTF) => {
+        loader.load('/objects/lobby_map.glb', (gltf: GLTF) => {
             const root = gltf.scene;
 
             root.traverse((child: Mesh) => {
