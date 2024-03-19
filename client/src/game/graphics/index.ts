@@ -13,7 +13,9 @@ import {
     CylinderGeometry,
     MeshPhongMaterial,
     Object3D,
-    Clock
+    Clock,
+    CameraHelper,
+    VSMShadowMap
 } from 'three';
 // @ts-ignore
 import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
@@ -62,6 +64,8 @@ export default class Graphics {
         });
         this.renderer.setSize(innerWidth, innerHeight);
         this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = VSMShadowMap;
+
         window.addEventListener('resize', this.handleResize.bind(this));
         window.addEventListener('contextmenu', this.onRightClick.bind(this));
 
@@ -137,7 +141,8 @@ export default class Graphics {
         this.scene.add(new CameraHelper(this.sun.shadow.camera));
 
         const lightGroup = new Group();
-        lightGroup.add(ambLight, dirLight);
+        lightGroup.name = 'lighting';
+        lightGroup.add(ambLight, this.sun);
 
         this.scene.add(lightGroup as any);
     }
