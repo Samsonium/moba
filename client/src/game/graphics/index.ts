@@ -29,6 +29,7 @@ export default class Graphics {
     private readonly camera: PerspectiveCamera;
     private readonly scene: Scene;
     private readonly raycaster: Raycaster;
+    private readonly clock: Clock;
 
     private readonly pathfinding: Pathfinding;
     private readonly pathfindingHelper: PathfindingHelper;
