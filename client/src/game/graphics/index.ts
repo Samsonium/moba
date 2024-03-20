@@ -1,3 +1,4 @@
+import {get} from 'svelte/store';
 import {
     AmbientLight,
     CubeTextureLoader,
@@ -14,13 +15,13 @@ import {
     MeshPhongMaterial,
     Object3D,
     Clock,
-    CameraHelper,
-    VSMShadowMap
+    PCFSoftShadowMap
 } from 'three';
 // @ts-ignore
 import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
 // @ts-ignore
 import { type GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { assetsStore } from '../assets/assets.store';
 import type PlayerNetData from '../network/player/PlayerNetData';
 
 export default class Graphics {
@@ -64,7 +65,7 @@ export default class Graphics {
         });
         this.renderer.setSize(innerWidth, innerHeight);
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = VSMShadowMap;
+        this.renderer.shadowMap.type = PCFSoftShadowMap;
 
         window.addEventListener('resize', this.handleResize.bind(this));
         window.addEventListener('contextmenu', this.onRightClick.bind(this));
@@ -89,6 +90,8 @@ export default class Graphics {
 
     /** Setup scene with map and objects */
     public setupScene() {
+        const assetStore = get(assetsStore);
+
         this.scene.background = new CubeTextureLoader()
             .setPath('/cubemap/')
             .load([
@@ -97,9 +100,9 @@ export default class Graphics {
                 'pz.png', 'nz.png'
             ]);
 
-        const loader = new GLTFLoader();
-        loader.load('/objects/lobby_map.glb', (gltf: GLTF) => {
-            const root = gltf.scene;
+        const lobbyMap = assetStore!.getAsset('lobbyMap');
+        if (lobbyMap) {
+            const root = lobbyMap.scene;
             root.castShadow = true;
             root.receiveShadow = true;
 
@@ -111,24 +114,26 @@ export default class Graphics {
             })
 
             this.scene.add(root);
-        });
-        loader.load('/objects/lobby_navmesh.gltf', (gltf: GLTF) => {
-            gltf.scene.traverse((child: Object3D) => {
+        }
+
+        const lobbyNavmesh = assetStore!.getAsset('lobbyNavmesh');
+        if (lobbyNavmesh) {
+            lobbyNavmesh.scene.traverse((child: Object3D) => {
                 if (!this.navmesh && child.isObject3D && child.children?.length) {
                     this.navmesh = child.children[0] as Mesh;
                     this.pathfinding.setZoneData(this.PF_ZONE, Pathfinding.createZone(this.navmesh.geometry));
                 }
             });
-        });
+        }
 
         const ambLight = new AmbientLight(0xFFFFFF, 1);
         ambLight.updateMatrixWorld();
 
-        this.sun = new DirectionalLight(0xFFFFFF, 5);
+        this.sun = new DirectionalLight(0xFFFFFF, 8);
         this.sun.castShadow = true;
-        this.sun.shadow.mapSize.set(1024, 1024);
-        this.sun.shadow.blurSamples = 12;
-        this.sun.shadow.radius = 2;
+        this.sun.shadow.mapSize.set(2048, 2048);
+        this.sun.shadow.blurSamples = 4;
+        this.sun.shadow.radius = 1;
         this.sun.shadow.camera.top = 50;
         this.sun.shadow.camera.left = -50;
         this.sun.shadow.camera.right = 50;
@@ -136,8 +141,6 @@ export default class Graphics {
         this.sun.position.copy(this.player.object.position).add(this.SUN_OFFSET);
         this.sun.target.position.copy(this.player.object.position).sub(this.SUN_OFFSET);
         this.sun.target.updateMatrixWorld();
-
-        this.scene.add(new CameraHelper(this.sun.shadow.camera));
 
         const lightGroup = new Group();
         lightGroup.name = 'lighting';
