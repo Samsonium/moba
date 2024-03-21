@@ -27,4 +27,12 @@ export default class AssetLoader<T = any> {
             return new AssetLoader(loader.loadAsync(path, onProgress));
         }
     }
+
+    /** Create FBX loader */
+    public static createFBX(path: string): LoaderInitFunc<Group> {
+        return (lm, onProgress) => {
+            const loader = new FBXLoader(lm);
+            return new AssetLoader(loader.loadAsync(path, onProgress));
+        }
+    }
 }

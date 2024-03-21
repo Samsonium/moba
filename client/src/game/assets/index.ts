@@ -2,24 +2,17 @@ import { writable, type Writable } from 'svelte/store';
 import { LoadingManager } from 'three';
 import { type LoaderInitFunc } from './AssetLoader';
 
-/** Asset loaders in object */
-type JobsList<T> = {
-    [K in keyof T]: T[K] extends LoaderInitFunc<infer U> ? LoaderInitFunc<U> : never;
-};
-
 /** Loaded assets in object */
 type AssetsList<T> = {
-    [K in keyof JobsList<T>]: JobsList<T>[K] extends LoaderInitFunc<infer AT>
-        ? AT
-        : null;
+    [K in keyof T]: T[K] extends LoaderInitFunc<infer U> ? U : null;
 };
 
-export default class Assets<T = object> {
+export default class Assets<T extends object> {
     private readonly manager: LoadingManager;
     public readonly progress: Writable<number>;
 
     /** Assets to load */
-    private readonly jobs: JobsList<T>;
+    private readonly jobs: T;
 
     /** Loaded assets */
     private assets: AssetsList<T> | null;
@@ -27,7 +20,7 @@ export default class Assets<T = object> {
     /** Callback to be called when assets are loaded */
     private onReadyCallback: (() => void) | null;
 
-    public constructor(jobs: JobsList<T>) {
+    public constructor(jobs: T) {
         this.manager = new LoadingManager();
         this.progress = writable(0);
         this.jobs = jobs;
@@ -50,7 +43,8 @@ export default class Assets<T = object> {
 
         // Create loaders
         for (const name in this.jobs) {
-            const asset = await this.jobs[name](this.manager, (e) => {
+            const job = this.jobs[name] as LoaderInitFunc<any>;
+            const asset = await job(this.manager, (e) => {
                 progress[name] = e.loaded / e.total;
 
                 const total = Assets.calcTotalPercent(count, progress);
@@ -66,7 +60,7 @@ export default class Assets<T = object> {
     }
 
     /** Get asset from asset storage */
-    public getAsset<U extends keyof AssetsList<T>>(name: U): AssetsList<T>[U] | null {
+    public getAsset<U extends keyof T>(name: U): AssetsList<T>[U] | null {
         if (!this.assets) {
             console.warn('Assets is not loaded yet');
             return null;
@@ -82,6 +76,11 @@ export default class Assets<T = object> {
      */
     public onReady(callback: () => void) {
         this.onReadyCallback = callback;
+    }
+
+    public destroy() {
+        this.progress.set(-1);
+        this.assets = null;
     }
 
     /**
