@@ -18,6 +18,10 @@ import {
 } from 'three';
 import { assetsStore } from '../assets/assets.store';
 
+/** Render loop handler callback function */
+type RenderHandler = (delta: number) => void;
+
+/** Main render class */
 export default class Graphics {
     private readonly CAM_OFFSET = new Vector3(10, 20, 10);
     private readonly SUN_OFFSET = new Vector3(-10, 30, 10);
@@ -28,11 +32,8 @@ export default class Graphics {
     private readonly raycaster: Raycaster;
     private readonly clock: Clock;
 
-    private readonly pathfinding: Pathfinding;
-    private readonly pathfindingHelper: PathfindingHelper;
-    private navmesh: Mesh | undefined;
-    private groupID: any;
-    private navpath: any;
+    private readonly renderHandlers: RenderHandler[];
+
     private sun: DirectionalLight | undefined;
 
     /** Render loop state */
@@ -57,6 +58,7 @@ export default class Graphics {
         this.clock = new Clock();
 
         this.renderStarted = false;
+        this.renderHandlers = [];
     }
 
     /** Setup scene with map and objects */
@@ -113,6 +115,14 @@ export default class Graphics {
         if (this.renderStarted) return;
         this.renderStarted = true;
         this.renderStep();
+    }
+
+    /**
+     * Add render loop handler
+     * @param handler function to handle render loop
+     */
+    public addRenderHandler(handler: RenderHandler) {
+        this.renderHandlers.push(handler);
     }
 
     /**
