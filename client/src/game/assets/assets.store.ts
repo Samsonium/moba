@@ -1,6 +1,5 @@
-import {writable} from'svelte/store';
-import type { assetList } from '../../lib/asset-list';
-import type Assets from './index';
+import { assetList } from '../../lib/asset-list';
+import Assets from './index';
 
 /** Assets store */
-export const assetsStore = writable<Assets<typeof assetList> | null>(null);
+export const assetsStore = new Assets(assetList);
