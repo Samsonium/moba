@@ -1,25 +1,29 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { Vector3 } from 'three';
     import { assetsStore } from './game/assets/assets.store';
-    import { assetList } from './lib/asset-list';
-    import Assets from './game/assets';
     import Network from './game/network';
     import Graphics from './game/graphics';
     import Keyboard from './game/keyboard';
-
-    $assetsStore = new Assets<typeof assetList>(assetList);
-    $assetsStore.loadAssets();
+    import LocalCharacter from './game/graphics/LocalCharater';
 
     let canvas: HTMLCanvasElement;
     onMount(() => {
         let n: Network,
             g: Graphics,
-            kb: Keyboard;
+            kb: Keyboard,
+            p: LocalCharacter;
 
-        $assetsStore!.onReady(() => {
+        assetsStore.loadAssets();
+        assetsStore.onReady(() => {
             n = new Network();
             g = new Graphics(canvas);
             kb = new Keyboard();
+            p = new LocalCharacter(g, new Vector3(0, 6.7, 0));
+
+            g.addRenderHandler((delta) => {
+                p.update(delta);
+            })
 
             g.setupScene();
             g.begin();
@@ -29,11 +33,12 @@
             n.destroy();
             g.destroy();
             kb.destroy();
-            assetsStore.set(null);
+            p.destroy();
+            assetsStore.destroy();
         }
     });
 
-    $: progress = $assetsStore?.progress;
+    $: progress = assetsStore.progress;
 </script>
 
 {#if typeof $progress === 'number' && $progress !== -1}
