@@ -1,4 +1,3 @@
-import {get} from 'svelte/store';
 import {
     AmbientLight,
     CubeTextureLoader,
@@ -17,15 +16,9 @@ import {
     Clock,
     PCFSoftShadowMap
 } from 'three';
-// @ts-ignore
-import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
-// @ts-ignore
-import { type GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { assetsStore } from '../assets/assets.store';
-import type PlayerNetData from '../network/player/PlayerNetData';
 
 export default class Graphics {
-    private readonly PF_ZONE = 'LOBBY';
     private readonly CAM_OFFSET = new Vector3(10, 20, 10);
     private readonly SUN_OFFSET = new Vector3(-10, 30, 10);
 
@@ -42,18 +35,6 @@ export default class Graphics {
     private navpath: any;
     private sun: DirectionalLight | undefined;
 
-    /** Players added to the scene */
-    private readonly players: {
-        object: Group,
-        data: PlayerNetData
-    }[];
-
-    /** Local player data */
-    private readonly player: {
-        object: Group,
-        data: Omit<PlayerNetData, 'id'>
-    };
-
     /** Render loop state */
     private renderStarted: boolean;
 
@@ -68,7 +49,6 @@ export default class Graphics {
         this.renderer.shadowMap.type = PCFSoftShadowMap;
 
         window.addEventListener('resize', this.handleResize.bind(this));
-        window.addEventListener('contextmenu', this.onRightClick.bind(this));
 
         this.camera = new PerspectiveCamera(45, innerWidth / innerHeight);
 
@@ -76,22 +56,11 @@ export default class Graphics {
         this.raycaster = new Raycaster();
         this.clock = new Clock();
 
-        this.pathfinding = new Pathfinding();
-        this.pathfindingHelper = new PathfindingHelper();
-        this.scene.add(this.pathfindingHelper);
-
-        this.players = [];
-        this.player = this.createLocalPlayer(0, 6.7, 0);
-        this.camera.position.copy(this.player.object.position).add(this.CAM_OFFSET);
-        this.camera.lookAt(0, 0, 0);
-
         this.renderStarted = false;
     }
 
     /** Setup scene with map and objects */
     public setupScene() {
-        const assetStore = get(assetsStore);
-
         this.scene.background = new CubeTextureLoader()
             .setPath('/cubemap/')
             .load([
@@ -100,31 +69,18 @@ export default class Graphics {
                 'pz.png', 'nz.png'
             ]);
 
-        const lobbyMap = assetStore!.getAsset('lobbyMap');
-        if (lobbyMap) {
-            const root = lobbyMap.scene;
-            root.castShadow = true;
-            root.receiveShadow = true;
-
-            root.traverse((child: Mesh) => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                }
-            })
-
-            this.scene.add(root);
-        }
-
-        const lobbyNavmesh = assetStore!.getAsset('lobbyNavmesh');
-        if (lobbyNavmesh) {
-            lobbyNavmesh.scene.traverse((child: Object3D) => {
-                if (!this.navmesh && child.isObject3D && child.children?.length) {
-                    this.navmesh = child.children[0] as Mesh;
-                    this.pathfinding.setZoneData(this.PF_ZONE, Pathfinding.createZone(this.navmesh.geometry));
-                }
-            });
-        }
+        const lobbyMap = assetsStore.getAsset('lobbyMap');
+        if (!lobbyMap) throw new Error('Assets is not loaded yet');
+        const root = lobbyMap.scene;
+        root.castShadow = true;
+        root.receiveShadow = true;
+        root.traverse((child: Object3D) => {
+            if ('isMesh' in child && child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        this.scene.add(root);
 
         const ambLight = new AmbientLight(0xFFFFFF, 1);
         ambLight.updateMatrixWorld();
@@ -138,9 +94,6 @@ export default class Graphics {
         this.sun.shadow.camera.left = -50;
         this.sun.shadow.camera.right = 50;
         this.sun.shadow.camera.bottom = -50;
-        this.sun.position.copy(this.player.object.position).add(this.SUN_OFFSET);
-        this.sun.target.position.copy(this.player.object.position).sub(this.SUN_OFFSET);
-        this.sun.target.updateMatrixWorld();
 
         const lightGroup = new Group();
         lightGroup.name = 'lighting';
@@ -152,7 +105,6 @@ export default class Graphics {
     /** Cleanup events */
     public destroy() {
         window.removeEventListener('resize', this.handleResize.bind(this));
-        window.removeEventListener('contextmenu', this.onRightClick.bind(this));
         this.scene.clear();
     }
 
@@ -164,87 +116,32 @@ export default class Graphics {
     }
 
     /**
-     * Right click handler (event **contextmenu**)
-     * @param {MouseEvent} e
+     * Cast ray to specified position using raycaster
+     * @param position Target position
      */
-    public onRightClick(e: MouseEvent) {
-        if (e.button !== 2) return;
-        e.preventDefault();
-
-        this.calcPath(new Vector2(
-            (e.clientX / innerWidth) * 2 - 1,
-            -(e.clientY / innerHeight) * 2 + 1
-        ));
-    }
-
-    /** Calculate navigation path and start movement */
-    private calcPath(position: Vector2) {
+    public rayCast(position: Vector2) {
         this.raycaster.setFromCamera(position, this.camera);
-        const res = this.raycaster.intersectObjects(this.scene.children);
-        if (!res?.[0]?.point) return;
-
-        const { point } = res[0];
-        this.groupID = this.pathfinding.getGroup(this.PF_ZONE, this.player.object.position);
-        const closest = this.pathfinding.getClosestNode(this.player.object.position, this.PF_ZONE, this.groupID);
-        this.navpath = this.pathfinding.findPath(closest.centroid, point, this.PF_ZONE, this.groupID);
-
-        // if (this.navpath) {
-        //     this.pathfindingHelper.reset();
-        //     this.pathfindingHelper.setPlayerPosition(this.player.object.position);
-        //     this.pathfindingHelper.setTargetPosition(point);
-        //     this.pathfindingHelper.setPath(this.navpath);
-        // }
-
-        if (!this.navpath?.length) return;
-    }
-
-    /** Move */
-    private move(delta: number) {
-        if (!this.navpath?.[0]) return;
-        const targetPos = this.navpath[0];
-        const distance = targetPos.clone().sub(this.player.object.position);
-        if (distance.lengthSq() > .5 * .05) {
-            distance.normalize();
-            this.player.object.position.add(distance.multiplyScalar(delta * 4));
-            this.camera.position.copy(this.player.object.position).add(this.CAM_OFFSET);
-
-            this.sun!.position.copy(this.player.object.position).add(this.SUN_OFFSET);
-            this.sun!.target.position.copy(this.player.object.position).sub(this.SUN_OFFSET);
-            this.sun!.target.updateMatrixWorld();
-        } else {
-            this.navpath.shift();
-        }
+        const intersects = this.raycaster.intersectObjects(this.scene.children);
+        return intersects?.[0] ?? null;
     }
 
     /**
-     * Add local player to scene
-     * @param x X-coord
-     * @param y Y-coord
-     * @param z Z-coord
+     * Update sun camera and active perspective camera
+     * @param position target position
      */
-    private createLocalPlayer(x: number, y: number, z: number) {
-        const group = new Group();
-        const character = new Mesh(
-            new CylinderGeometry(.3, .3, 1.4),
-            new MeshPhongMaterial({color: 0x6DFF6D})
-        );
-        character.castShadow = true;
-        character.receiveShadow = true;
-        character.position.y = .7;
-        group.add(character);
+    public updateShadowCaster(position: Vector3) {
+        this.camera.position.copy(position).add(this.CAM_OFFSET);
+        this.camera.lookAt(position);
 
-        group.position.set(x, y, z);
-        this.scene.add(group);
-        return {
-            data: {
-                nick: 'Player',
-                hp: 100,
-                mp: 100,
-                position: group.position,
-                rotation: group.rotation.y
-            },
-            object: group
-        };
+        if (!this.sun) return;
+        this.sun.position.copy(position).add(this.SUN_OFFSET);
+        this.sun.target.position.copy(position).sub(this.SUN_OFFSET);
+        this.sun.target.updateMatrixWorld();
+    }
+
+    /** Get scene */
+    public get currentScene() {
+        return this.scene;
     }
 
     /** Handle window resize */
@@ -258,11 +155,9 @@ export default class Graphics {
     private renderStep() {
         if (!this.renderStarted) return;
 
-        for (const player of this.players) {
-            //
-        }
+        for (const handler of this.renderHandlers)
+            handler(this.clock.getDelta());
 
-        this.move(this.clock.getDelta());
         this.renderer.render(this.scene, this.camera);
         requestAnimationFrame(this.renderStep.bind(this));
     }
