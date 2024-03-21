@@ -1,10 +1,11 @@
-import { type Mesh, type Object3D, Vector2, type Vector3 } from 'three';
+import { assetsStore } from '../assets/assets.store';
+import { Easing, Tween } from '@tweenjs/tween.js';
 // @ts-ignore
 import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
-import { assetsStore } from '../assets/assets.store';
-import type PlayerNetData from '../network/player/PlayerNetData';
+import { Euler, type Mesh, type Object3D, Vector2, type Vector3 } from 'three';
 import Character from './Character';
 import type Graphics from './index';
+import type PlayerNetData from '../network/player/PlayerNetData';
 
 /** Local character class */
 export default class LocalCharacter extends Character {
@@ -29,6 +30,9 @@ export default class LocalCharacter extends Character {
 
     /** Network socket player data */
     private netData: Omit<PlayerNetData, 'id'> | undefined;
+
+    /** Tween for rotation */
+    private tweenRotation: Tween<Euler> | undefined;
 
     public constructor(g: Graphics, initial: Vector3) {
         super(g, initial);
@@ -85,9 +89,9 @@ export default class LocalCharacter extends Character {
      */
     public update(delta: number): void {
         this.g.updateShadowCaster(this.position);
+        this.tweenRotation?.update();
 
         if (!this.navpath?.length) return;
-        console.log('Update');
 
         const target = this.navpath[0];
         const distance = target.clone().sub(this.position);
@@ -111,7 +115,12 @@ export default class LocalCharacter extends Character {
      */
     private rotateByPath(target: Vector3) {
         const direction = target.clone().sub(this.position);
-        this.object.rotation.y = Math.atan2(direction.x, direction.z);
+
+        this.tweenRotation?.stop();
+        this.tweenRotation = new Tween(this.object.rotation).to({
+            y: Math.atan2(direction.x, direction.z)
+        }, 300);
+        this.tweenRotation.easing(Easing.Quintic.Out).start();
     }
 
     /** Handle left mouse click */
