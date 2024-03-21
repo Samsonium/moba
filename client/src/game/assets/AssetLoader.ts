@@ -1,4 +1,6 @@
-import type { LoadingManager } from 'three';
+import type { Group, LoadingManager } from 'three';
+// @ts-ignore
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 // @ts-ignore
 import { type GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
