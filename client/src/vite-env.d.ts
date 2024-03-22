@@ -12,7 +12,12 @@ declare module 'three-pathfinding' {
         public static createZone(geom: BufferGeometry): any;
     }
 
-    export class PathfindingHelper extends Object3D {}
+    export class PathfindingHelper extends Object3D {
+        public reset(): void;
+        public setPath(path: Vector3[]): void;
+        public setPlayerPosition(pos: Vector3): void;
+        public setTargetPosition(pos: Vector3): void;
+    }
 }
 
 declare module 'three/examples/jsm/loaders/GLTFLoader' {
