@@ -22,3 +22,9 @@ declare module 'three/examples/jsm/loaders/GLTFLoader' {
         scene: Group;
     }
 }
+
+declare module 'three/examples/jsm/utils/SkeletonUtils' {
+    import type { Group } from 'three';
+
+    export function clone(object: Group): Group;
+}
