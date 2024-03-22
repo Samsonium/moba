@@ -7,8 +7,7 @@ const server = new Server<ClientEvents, ServerEvents, any, SocketData>({
     cors: {
         origin: true
     },
-    allowUpgrades: true,
-    transports: ['websocket']
+    allowUpgrades: true
 });
 
 const players: Record<string, SocketData & {socket: Socket}> = {};
