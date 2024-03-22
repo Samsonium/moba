@@ -4,10 +4,13 @@ import type Graphics from './index';
 
 /** Playable character class */
 export default class Character {
+    private readonly role: string | undefined;
+
     protected readonly object: Group;
     protected readonly g: Graphics;
 
-    public constructor(g: Graphics, initial: Vector3) {
+    public constructor(g: Graphics, initial: Vector3, role: string = 'network') {
+        this.role = role;
         this.object = new Group();
         this.g = g;
 
@@ -23,6 +26,9 @@ export default class Character {
         this.object.position.copy(initial);
 
         this.g.currentScene.add(this.object);
+
+        if (import.meta.env.DEV)
+            console.log('Created new character:', role);
     }
 
     /** Get character's position */
