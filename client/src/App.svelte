@@ -16,24 +16,26 @@
 
         assetsStore.loadAssets();
         assetsStore.onReady(() => {
-            n = new Network();
             g = new Graphics(canvas);
             kb = new Keyboard();
             p = new LocalCharacter(g, new Vector3(0, 6.7, 0));
+            n = new Network(g, p);
 
             g.addRenderHandler((delta) => {
                 p.update(delta);
+                n.update();
             })
 
             g.setupScene();
             g.begin();
+            n.connect();
         });
 
         return () => {
-            n.destroy();
-            g.destroy();
             kb.destroy();
+            n.destroy();
             p.destroy();
+            g.destroy();
             assetsStore.destroy();
         }
     });
