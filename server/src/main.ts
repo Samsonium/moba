@@ -64,21 +64,21 @@ server.on('connect', (socket) => {
 });
 
 setInterval(() => {
-    if (Object.keys(players).length < 2) return;
-    console.log(`Connected players: [${Object.keys(players).length}]. Emitting server update`);
-    for (const id in players) {
-        const list = Object.assign({}, players);
-        delete list[id];
-        const filtered = Object.values(list).map((player) => ({
-            id: player.id,
-            nick: player.nick,
-            hp: player.hp,
-            mp: player.mp,
-            position: player.position,
-            rotation: player.rotation
-        }));
+    if (!Object.keys(players).length) return;
 
-        players[id].socket.emit('gameState', filtered);
+    // Array of players to emit with socket
+    const arrayToEmit = Object.values(players).map((player) => ({
+        id: player.id,
+        nick: player.nick,
+        hp: player.hp,
+        mp: player.mp,
+        position: player.position,
+        rotation: player.rotation
+    }));
+
+    // Emit players to each connected player
+    for (const id in players) {
+        players[id].socket.emit('gameState', arrayToEmit);
     }
 }, 1000);
 
