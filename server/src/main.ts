@@ -14,8 +14,12 @@ const players: Record<string, SocketData & {socket: Socket}> = {};
 
 server.on('connect', (socket) => {
     console.log(`Socket ${socket.id} connected`)
+
+    // Generate ID
     const id = 'xxxx-xxxx'.replace(/x/g,
         () => Math.floor(Math.random() * 16).toString(16));
+
+    // Init socket data
     socket.data = {
         id,
         nick: '',
@@ -29,6 +33,7 @@ server.on('connect', (socket) => {
         rotation: 0,
     };
 
+    // Player display name get event
     socket.on('expose', (name) => {
         if (players[id])
             return;
@@ -38,19 +43,23 @@ server.on('connect', (socket) => {
             socket,
             ...socket.data
         };
+
+        socket.emit('exposeEnd', socket.data.id);
     });
 
-    socket.on('disconnect', () => {
-        if (!players[id]) return;
-        delete players[id];
-    });
-
+    // Player incoming update event
     socket.on('playerUpdate', (player) => {
         if (!players[id]) return;
         players[id] = {
             ...players[id],
             ...player
         };
+    });
+
+    // Disconnect event
+    socket.on('disconnect', () => {
+        if (!players[id]) return;
+        delete players[id];
     });
 });
 
@@ -76,4 +85,4 @@ setInterval(() => {
 const PORT = 7940;
 
 server.listen(PORT);
-console.log(`Started at ${PORT}`)
+console.log(`Started at ${PORT}`);
