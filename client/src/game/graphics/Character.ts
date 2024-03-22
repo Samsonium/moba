@@ -37,6 +37,13 @@ export default class Character {
             console.log('Created new character:', role);
     }
 
+    /** Destroy character */
+    public destroy() {
+        this.g.currentScene.remove(this.object);
+        if (import.meta.env.DEV)
+            console.log(`Character destroyed [${this.role}]`);
+    }
+
     /** Get character's position */
     public get position() {
         return this.object.position;
