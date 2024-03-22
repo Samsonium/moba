@@ -29,7 +29,7 @@ export default class LocalCharacter extends Character {
     private groupID: any;
 
     /** Network socket player data */
-    private netData: Omit<PlayerNetData, 'id'> | undefined;
+    private netData: Omit<PlayerNetData, 'id'>;
 
     /** Tween for rotation */
     private tweenRotation: Tween<Euler> | undefined;
@@ -52,6 +52,15 @@ export default class LocalCharacter extends Character {
                 this.pf.setZoneData(this.pfZone, Pathfinding.createZone(this.navmesh.geometry));
             }
         });
+
+        // Init network data
+        this.netData = {
+            nick: 'Player',
+            hp: 100,
+            mp: 100,
+            position: initial,
+            rotation: this.object.rotation.y
+        };
 
         // Setup events
         window.addEventListener('click', this.handleLeftClick.bind(this));
@@ -107,6 +116,21 @@ export default class LocalCharacter extends Character {
 
         distance.normalize();
         this.position.add(distance.multiplyScalar(delta * 4));
+    }
+
+    /** Get player's network data */
+    public get net() {
+        return this.netData;
+    }
+
+    /** Set health points */
+    public set hp(value: number) {
+        this.netData.hp = value;
+    }
+
+    /** Set mana points */
+    public set mp(value: number) {
+        this.netData.mp = value;
     }
 
     /**
