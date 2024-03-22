@@ -74,11 +74,6 @@ export default class LocalCharacter extends Character {
         navmesh.scene.traverse((node: Object3D) => {
             if (!this.navmesh && node.isObject3D && node.children?.length) {
                 this.navmesh = node.children[0] as Mesh;
-                this.navmesh.material = new MeshBasicMaterial({
-                    color: 0xFFFFFF,
-                    wireframe: true
-                })
-                this.g.currentScene.add(this.navmesh);
                 this.pf.setZoneData(this.pfZone, Pathfinding.createZone(this.navmesh.geometry));
             }
         });
