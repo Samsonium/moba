@@ -23,8 +23,13 @@ type RenderHandler = (delta: number) => void;
 
 /** Main render class */
 export default class Graphics {
+
+    // -------- [ CONST VECTOR OFFSETS ]
+
     private readonly CAM_OFFSET = new Vector3(10, 20, 10);
     private readonly SUN_OFFSET = new Vector3(-10, 30, 10);
+
+    // -------- [ THREE JS FEATURES ]
 
     private readonly renderer: WebGLRenderer;
     private readonly camera: PerspectiveCamera;
@@ -32,8 +37,10 @@ export default class Graphics {
     private readonly raycaster: Raycaster;
     private readonly clock: Clock;
 
+    /** Array of render loop handlers */
     private readonly renderHandlers: RenderHandler[];
 
+    /** Direct light as sun */
     private sun: DirectionalLight | undefined;
 
     /** Render loop state */
