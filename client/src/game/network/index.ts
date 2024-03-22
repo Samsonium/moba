@@ -41,7 +41,11 @@ export default class Network {
         this.g = g;
         this.lc = lc;
         this.socket = io('ws://localhost:7940', {
-            autoConnect: false
+            autoConnect: false,
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000
         });
 
         this.socket.on('connect', this.handleConnection.bind(this));
