@@ -1,8 +1,17 @@
 import { assetsStore } from '../assets/assets.store';
 import { Easing, Tween } from '@tweenjs/tween.js';
+import { clone } from 'three/examples/jsm/utils/SkeletonUtils';
 // @ts-ignore
 import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
-import { Euler, type Mesh, type Object3D, Vector2, type Vector3 } from 'three';
+import {
+    AnimationAction,
+    AnimationMixer,
+    Euler,
+    type Mesh,
+    type Object3D,
+    Vector2,
+    type Vector3
+} from 'three';
 import Character from './Character';
 import type Graphics from './index';
 import type PlayerNetData from '../network/player/PlayerNetData';
@@ -22,6 +31,12 @@ export default class LocalCharacter extends Character {
     /** Helper for pathfinding debug */
     private readonly pfHelper: PathfindingHelper;
 
+    /** Animations list */
+    private readonly actions: Record<string, AnimationAction>;
+
+    /** Animations mixer */
+    private mixer: AnimationMixer | null;
+
     /** Navmesh for pathfinding */
     private navmesh: Mesh | undefined;
 
@@ -37,6 +52,11 @@ export default class LocalCharacter extends Character {
     public constructor(g: Graphics, initial: Vector3) {
         super(g, initial, 'local');
         this.pf = new Pathfinding();
+
+        // Setup animations
+        this.actions = {};
+        this.mixer = null;
+        this.setupAnimations();
 
         this.object.name = 'local_character';
 
@@ -102,11 +122,15 @@ export default class LocalCharacter extends Character {
      */
     public update(delta: number): void {
         this.g.updateShadowCaster(this.position);
+        this.mixer?.update(delta);
         this.tweenRotation?.update();
         this.netData.position = this.position;
         this.netData.rotation = this.rotation.y;
 
-        if (!this.navpath?.length) return;
+        if (!this.navpath?.length) {
+            this.actions.aIdle.crossFadeTo(this.actions.aRun, 300, false);
+            return;
+        }
 
         const target = this.navpath[0];
         const distance = target.clone().sub(this.position);
@@ -121,7 +145,9 @@ export default class LocalCharacter extends Character {
         }
 
         distance.normalize();
-        this.position.add(distance.multiplyScalar(delta * 4));
+        this.position.add(distance.multiplyScalar(delta * 5));
+
+        this.actions.aRun.crossFadeTo(this.actions.aIdle, 300, false);
     }
 
     /** Get player's network data */
@@ -141,6 +167,32 @@ export default class LocalCharacter extends Character {
 
     public set id(value: string) {
         this.netData.id = value;
+    }
+
+    /** Setup animation features for character */
+    private setupAnimations() {
+        this.mixer = new AnimationMixer(this.object);
+
+        // Retrieve clips
+        const names: ('aIdle' | 'aRun')[] = ['aIdle', 'aRun'];
+        names.forEach((n) => {
+            const asset = assetsStore.getAsset(('yBot_' + n) as `yBot_${'aIdle' | 'aRun'}`);
+            if (!asset) throw new Error('Cannot load animation ' + n);
+
+            const assetClone = clone(asset);
+            // assetClone.scale.setScalar(.015);
+
+            // Retrieve and rename animation
+            const animation = assetClone.animations[0];
+            animation.name = n;
+
+            this.actions[n] = this.mixer!.clipAction(animation);
+            this.actions[n].play();
+        });
+        console.log(this.actions);
+
+        // Start idle animation
+        this.actions.aIdle.play();
     }
 
     /**
