@@ -18,7 +18,7 @@ export default class Character {
         const charModelAsset = assetsStore.getAsset('yBot');
         if (!charModelAsset) throw new Error('Assets are not loaded');
 
-        const charModel = clone(charModelAsset.scene);
+        const charModel = clone(charModelAsset);
         charModel.traverse(object => {
             if ('isMesh' in object && object.isMesh) {
                 object.castShadow = true;
@@ -26,7 +26,7 @@ export default class Character {
             }
         });
 
-        charModel.scale.setScalar(1.5);
+        charModel.scale.setScalar(.015);
         this.object.add(charModel);
         this.object.name = 'character';
         this.object.position.copy(initial);
