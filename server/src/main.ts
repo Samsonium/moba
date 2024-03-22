@@ -80,7 +80,7 @@ setInterval(() => {
     for (const id in players) {
         players[id].socket.emit('gameState', arrayToEmit);
     }
-}, 1000);
+}, 20);
 
 const PORT = 7940;
 
