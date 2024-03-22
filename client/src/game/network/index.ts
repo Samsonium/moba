@@ -63,6 +63,14 @@ export default class Network {
             console.log('Destroying connection');
     }
 
+    /** Update players */
+    public update() {
+        for (const player of this.players) {
+            player.tween.position.update();
+            player.tween.rotation.update();
+        }
+    }
+
     /** Get players list */
     public get playerList() {
         return this.players;
