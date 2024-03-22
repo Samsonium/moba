@@ -41,4 +41,9 @@ export default class Character {
     public get position() {
         return this.object.position;
     }
+
+    /** Get character's rotation */
+    public get rotation() {
+        return this.object.rotation;
+    }
 }
