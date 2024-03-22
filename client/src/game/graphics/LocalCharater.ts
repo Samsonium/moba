@@ -37,6 +37,9 @@ export default class LocalCharacter extends Character {
     /** Animations mixer */
     private mixer: AnimationMixer | null;
 
+    /** Active animation action */
+    private currentAction: AnimationAction | undefined;
+
     /** Navmesh for pathfinding */
     private navmesh: Mesh | undefined;
 
@@ -128,7 +131,12 @@ export default class LocalCharacter extends Character {
         this.netData.rotation = this.rotation.y;
 
         if (!this.navpath?.length) {
-            this.actions.aIdle.crossFadeTo(this.actions.aRun, 300, false);
+            if (this.currentAction !== this.actions.aIdle) {
+                this.actions.aRun.fadeOut(.1);
+                this.actions.aIdle.reset().fadeIn(.1).play();
+                this.currentAction = this.actions.aIdle;
+            }
+
             return;
         }
 
@@ -147,7 +155,11 @@ export default class LocalCharacter extends Character {
         distance.normalize();
         this.position.add(distance.multiplyScalar(delta * 5));
 
-        this.actions.aRun.crossFadeTo(this.actions.aIdle, 300, false);
+        if (this.currentAction !== this.actions.aRun) {
+            this.actions.aIdle.fadeOut(.1);
+            this.actions.aRun.reset().fadeIn(.1).play();
+            this.currentAction = this.actions.aRun;
+        }
     }
 
     /** Get player's network data */
@@ -189,9 +201,6 @@ export default class LocalCharacter extends Character {
             this.actions[n] = this.mixer!.clipAction(animation);
             this.actions[n].play();
         });
-
-        // Start idle animation
-        this.actions.aIdle.play();
     }
 
     /**
