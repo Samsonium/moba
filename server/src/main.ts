@@ -12,10 +12,6 @@ const server = new Server<ClientEvents, ServerEvents, any, SocketData>({
 
 const players: Record<string, SocketData & {socket: Socket}> = {};
 
-server.on('connection', (socket) => {
-    console.log('Socket connecting:', socket.id);
-})
-
 server.on('connect', (socket) => {
     console.log(`Socket ${socket.id} connected`)
     const id = 'xxxx-xxxx'.replace(/x/g,
