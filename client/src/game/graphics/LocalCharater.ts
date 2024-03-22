@@ -13,6 +13,9 @@ export default class LocalCharacter extends Character {
     /** Pathfinding zone name */
     private readonly pfZone = 'LOCAL_LOBBY';
 
+    /** Network socket player data */
+    private readonly netData: PlayerNetData;
+
     /** Pathfinding class */
     private readonly pf: Pathfinding;
 
@@ -28,15 +31,14 @@ export default class LocalCharacter extends Character {
     /** Pathfinding group ID */
     private groupID: any;
 
-    /** Network socket player data */
-    private netData: Omit<PlayerNetData, 'id'>;
-
     /** Tween for rotation */
     private tweenRotation: Tween<Euler> | undefined;
 
     public constructor(g: Graphics, initial: Vector3) {
-        super(g, initial);
+        super(g, initial, 'local');
         this.pf = new Pathfinding();
+
+        this.object.name = 'local_character';
 
         // For debugging purposes in future
         this.pfHelper = new PathfindingHelper();
@@ -55,6 +57,7 @@ export default class LocalCharacter extends Character {
 
         // Init network data
         this.netData = {
+            id: '',
             nick: 'Player',
             hp: 100,
             mp: 100,
@@ -71,6 +74,7 @@ export default class LocalCharacter extends Character {
     public destroy() {
         window.removeEventListener('click', this.handleLeftClick.bind(this));
         window.removeEventListener('contextmenu', this.handleRightClick.bind(this));
+        super.destroy();
     }
 
     /**
@@ -99,6 +103,8 @@ export default class LocalCharacter extends Character {
     public update(delta: number): void {
         this.g.updateShadowCaster(this.position);
         this.tweenRotation?.update();
+        this.netData.position = this.position;
+        this.netData.rotation = this.rotation.y;
 
         if (!this.navpath?.length) return;
 
@@ -133,6 +139,10 @@ export default class LocalCharacter extends Character {
         this.netData.mp = value;
     }
 
+    public set id(value: string) {
+        this.netData.id = value;
+    }
+
     /**
      * Rotate character towards target
      * @param target target position
@@ -158,7 +168,7 @@ export default class LocalCharacter extends Character {
 
         this.tweenRotation = new Tween(this.object.rotation).to({
             y: (this.object.rotation.y + shortestAngle) % (Math.PI * 2)
-        }, 1300);
+        }, 300);
         this.tweenRotation.easing(Easing.Quintic.Out).start();
     }
 
