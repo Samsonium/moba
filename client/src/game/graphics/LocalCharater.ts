@@ -189,7 +189,6 @@ export default class LocalCharacter extends Character {
             this.actions[n] = this.mixer!.clipAction(animation);
             this.actions[n].play();
         });
-        console.log(this.actions);
 
         // Start idle animation
         this.actions.aIdle.play();
