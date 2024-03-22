@@ -117,9 +117,24 @@ export default class LocalCharacter extends Character {
         const direction = target.clone().sub(this.position);
 
         this.tweenRotation?.stop();
+
+        const targetRotation = Math.atan2(direction.x, direction.z);
+        const currentRotation = this.object.rotation.y;
+
+        // Calculate the shortest angular distance to rotate
+
+        let shortestAngle = ((targetRotation - currentRotation + Math.PI) % (Math.PI * 2)) - Math.PI;
+
+        // Ensure shortestAngle is within the range of -PI to PI
+        if (shortestAngle <= -Math.PI) {
+            shortestAngle += Math.PI * 2;
+        } else if (shortestAngle > Math.PI) {
+            shortestAngle -= Math.PI * 2;
+        }
+
         this.tweenRotation = new Tween(this.object.rotation).to({
-            y: Math.atan2(direction.x, direction.z)
-        }, 300);
+            y: (this.object.rotation.y + shortestAngle) % (Math.PI * 2)
+        }, 1300);
         this.tweenRotation.easing(Easing.Quintic.Out).start();
     }
 
