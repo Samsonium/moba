@@ -1,5 +1,6 @@
 import { assetsStore } from '../assets/assets.store';
 import { Group, Vector3 } from 'three';
+import { clone } from 'three/examples/jsm/utils/SkeletonUtils';
 import type Graphics from './index';
 
 /** Playable character class */
@@ -14,15 +15,20 @@ export default class Character {
         this.object = new Group();
         this.g = g;
 
-        const charModel = assetsStore.getAsset('yBot');
-        if (!charModel) throw new Error('Assets are not loaded');
+        const charModelAsset = assetsStore.getAsset('yBot');
+        if (!charModelAsset) throw new Error('Assets are not loaded');
 
+        const charModel = clone(charModelAsset.scene);
         charModel.traverse(object => {
-            object.castShadow = true;
-            object.receiveShadow = true;
-        })
-        charModel.scale.multiplyScalar(.015);
+            if ('isMesh' in object && object.isMesh) {
+                object.castShadow = true;
+                object.receiveShadow = true;
+            }
+        });
+
+        charModel.scale.setScalar(1.5);
         this.object.add(charModel);
+        this.object.name = 'character';
         this.object.position.copy(initial);
 
         this.g.currentScene.add(this.object);
