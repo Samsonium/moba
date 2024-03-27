@@ -1,17 +1,7 @@
 import { assetsStore } from '../assets/assets.store';
 import { Easing, Tween } from '@tweenjs/tween.js';
-import { clone } from 'three/examples/jsm/utils/SkeletonUtils';
-// @ts-ignore
 import { Pathfinding, PathfindingHelper } from 'three-pathfinding';
-import {
-    AnimationAction,
-    AnimationMixer,
-    Euler,
-    type Mesh, MeshBasicMaterial,
-    type Object3D,
-    Vector2,
-    type Vector3
-} from 'three';
+import {Euler, Vector2, Vector3, type Mesh, type Object3D} from 'three';
 import Character from './Character';
 import type Graphics from './index';
 import type PlayerNetData from '../network/player/PlayerNetData';
