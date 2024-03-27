@@ -31,15 +31,6 @@ export default class LocalCharacter extends Character {
     /** Helper for pathfinding debug */
     private readonly pfHelper: PathfindingHelper;
 
-    /** Animations list */
-    private readonly actions: Record<string, AnimationAction>;
-
-    /** Animations mixer */
-    private mixer: AnimationMixer | null;
-
-    /** Active animation action */
-    private currentAction: AnimationAction | undefined;
-
     /** Navmesh for pathfinding */
     private navmesh: Mesh | undefined;
 
@@ -55,11 +46,6 @@ export default class LocalCharacter extends Character {
     public constructor(g: Graphics, initial: Vector3) {
         super(g, initial, 'local');
         this.pf = new Pathfinding();
-
-        // Setup animations
-        this.actions = {};
-        this.mixer = null;
-        this.setupAnimations();
 
         this.object.name = 'local_character';
 
@@ -136,18 +122,16 @@ export default class LocalCharacter extends Character {
      * @param delta Clock delta
      */
     public update(delta: number): void {
+        super.update(delta);
+
         this.g.updateShadowCaster(this.position);
-        this.mixer?.update(delta);
         this.tweenRotation?.update();
         this.netData.position = this.position;
         this.netData.rotation = this.rotation.y;
 
         if (!this.navpath?.length) {
-            if (this.currentAction !== this.actions.aIdle) {
-                this.actions.aRun.fadeOut(.1);
-                this.actions.aIdle.reset().fadeIn(.1).play();
-                this.currentAction = this.actions.aIdle;
-            }
+            if (this.charAction !== this.charActions.aIdle)
+                this.fadeAnimation('aRun', 'aIdle');
 
             return;
         }
@@ -167,11 +151,8 @@ export default class LocalCharacter extends Character {
         distance.normalize();
         this.position.add(distance.multiplyScalar(delta * 5));
 
-        if (this.currentAction !== this.actions.aRun) {
-            this.actions.aIdle.fadeOut(.1);
-            this.actions.aRun.reset().fadeIn(.1).play();
-            this.currentAction = this.actions.aRun;
-        }
+        if (this.charAction !== this.charActions.aRun)
+            this.fadeAnimation('aIdle', 'aRun');
     }
 
     /** Get player's network data */
@@ -191,28 +172,6 @@ export default class LocalCharacter extends Character {
 
     public set id(value: string) {
         this.netData.id = value;
-    }
-
-    /** Setup animation features for character */
-    private setupAnimations() {
-        this.mixer = new AnimationMixer(this.object);
-
-        // Retrieve clips
-        const names: ('aIdle' | 'aRun')[] = ['aIdle', 'aRun'];
-        names.forEach((n) => {
-            const asset = assetsStore.getAsset(('yBot_' + n) as `yBot_${'aIdle' | 'aRun'}`);
-            if (!asset) throw new Error('Cannot load animation ' + n);
-
-            const assetClone = clone(asset);
-            // assetClone.scale.setScalar(.015);
-
-            // Retrieve and rename animation
-            const animation = assetClone.animations[0];
-            animation.name = n;
-
-            this.actions[n] = this.mixer!.clipAction(animation);
-            this.actions[n].play();
-        });
     }
 
     /**

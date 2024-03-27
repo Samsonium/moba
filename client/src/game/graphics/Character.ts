@@ -1,5 +1,5 @@
 import { assetsStore } from '../assets/assets.store';
-import { Group, Vector3 } from 'three';
+import { AnimationAction, AnimationMixer, Group, Vector3 } from 'three';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils';
 import type Graphics from './index';
 
@@ -9,6 +9,15 @@ export default class Character {
 
     protected readonly object: Group;
     protected readonly g: Graphics;
+
+    /** Animations list */
+    private readonly actions: Record<'aIdle' | 'aRun' | string, AnimationAction>;
+
+    /** Animations mixer */
+    private mixer: AnimationMixer | null;
+
+    /** Active animation action */
+    private currentAction: AnimationAction | undefined;
 
     public constructor(g: Graphics, initial: Vector3, role: string = 'network') {
         this.role = role;
@@ -33,6 +42,11 @@ export default class Character {
 
         this.g.currentScene.add(this.object);
 
+        // Setup actions
+        this.actions = {};
+        this.mixer = null;
+        this.setupAnimations();
+
         if (import.meta.env.DEV)
             console.log('Created new character:', role);
     }
@@ -44,6 +58,23 @@ export default class Character {
             console.log(`Character destroyed [${this.role}]`);
     }
 
+    public update(delta: number) {
+        this.charMixer?.update(delta);
+    }
+
+    /** Cross-fade animations */
+    public fadeAnimation(fromName: string, toName: string) {
+        if (this.currentAction === this.actions[toName])
+            return;
+
+        this.actions[fromName].fadeOut(.1);
+        this.actions[toName].reset().fadeIn(.1).play();
+        this.currentAction = this.actions[toName];
+
+        if (import.meta.env.DEV)
+            console.log(`Character ${this.role} faded from ${fromName} to ${toName}`);
+    }
+
     /** Get character's position */
     public get position() {
         return this.object.position;
@@ -52,5 +83,41 @@ export default class Character {
     /** Get character's rotation */
     public get rotation() {
         return this.object.rotation;
+    }
+
+    /** Get character's animations mixer */
+    protected get charMixer() {
+        return this.mixer;
+    }
+
+    /** Get current animation action */
+    protected get charAction(): AnimationAction | undefined {
+        return this.currentAction;
+    }
+
+    /** Get character's animations list */
+    protected get charActions() {
+        return this.actions;
+    }
+
+    /** Setup animation features for character */
+    private setupAnimations() {
+        this.mixer = new AnimationMixer(this.object.children[0]);
+
+        // Retrieve clips
+        const names: ('aIdle' | 'aRun')[] = ['aIdle', 'aRun'];
+        names.forEach((n) => {
+            const asset = assetsStore.getAsset(('yBot_' + n) as `yBot_${'aIdle' | 'aRun'}`);
+            if (!asset) throw new Error('Cannot load animation ' + n);
+
+            const assetClone = clone(asset);
+
+            // Retrieve and rename animation
+            const animation = assetClone.animations[0];
+            animation.name = n;
+
+            this.actions[n] = this.mixer!.clipAction(animation);
+            this.actions[n].play();
+        });
     }
 }
