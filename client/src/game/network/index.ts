@@ -68,10 +68,11 @@ export default class Network {
     }
 
     /** Update players */
-    public update() {
+    public update(delta: number) {
         for (const player of this.players) {
             player.tween.position.update();
             player.tween.rotation.update();
+            player.character.update(delta);
         }
     }
 
@@ -115,8 +116,8 @@ export default class Network {
     private handleWorldUpdate(players: PlayerNetData[]): void {
         for (const player of players) {
             if (player.id === this.lc.net.id) {
-                this.lc.net.hp = player.hp;
-                this.lc.net.mp = player.mp;
+                this.lc.hp = player.hp;
+                this.lc.mp = player.mp;
                 continue;
             }
 
@@ -131,6 +132,18 @@ export default class Network {
 
             if (existentPlayer) {
                 existentPlayer.net = player;
+
+                // Calculate previous and last positions
+                const diff = new Vector3(
+                    Math.abs(existentPlayer.character.position.x - position.x),
+                    Math.abs(existentPlayer.character.position.y - position.y),
+                    Math.abs(existentPlayer.character.position.z - position.z)
+                );
+
+                // Change animations
+                if (diff.length() < .2)
+                    existentPlayer.character.fadeAnimation('aRun', 'aIdle');
+                else existentPlayer.character.fadeAnimation('aIdle', 'aRun');
 
                 existentPlayer.tween.position.stop();
                 existentPlayer.tween.rotation.stop();
@@ -153,6 +166,7 @@ export default class Network {
                         rotation: new Tween(character.rotation)
                     }
                 });
+
                 if (import.meta.env.DEV)
                     console.log('New player:', player.nick, `(${player.id})`);
             }

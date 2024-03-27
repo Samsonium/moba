@@ -23,7 +23,7 @@
 
             g.addRenderHandler((delta) => {
                 p.update(delta);
-                n.update();
+                n.update(delta);
             })
 
             g.setupScene();
@@ -32,11 +32,11 @@
         });
 
         return () => {
-            kb.destroy();
-            n.destroy();
-            p.destroy();
-            g.destroy();
-            assetsStore.destroy();
+            kb?.destroy();
+            n?.destroy();
+            p?.destroy();
+            g?.destroy();
+            assetsStore?.destroy();
         }
     });
 
